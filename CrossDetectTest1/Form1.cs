@@ -65,6 +65,7 @@ namespace CrossDetectTest1
         int[, ,] TemplateColor;
         List<System.Drawing.Point> FinalDefectPList = new List<System.Drawing.Point>();
 
+        List<WeldVisionList> WeldVisionTotalList = new List<WeldVisionList>();
 
         List<PointF> WeldCircleP;
         List<PointF> BlackCircleP;
@@ -124,17 +125,11 @@ namespace CrossDetectTest1
 
 
 
+
+
                 //取得灰階影像
                 Image<Gray, byte> grayImage = new Image<Gray, byte>(OriBitmap);
-
-
-
                 OriBitmap = grayImage.ToBitmap();
-
-
-                //  ProcessBitmap = OriBitmap;
-
-
 
 
                 OriBitmapArr = new int[OriBitmap.Width, OriBitmap.Height, 3];
@@ -2020,7 +2015,7 @@ namespace CrossDetectTest1
             foreach (PointF p in BlackCircleP)
             {
 
-                Console.WriteLine(prtcnt + "(" + p.X + "," + p.Y + ")=" + OriBitmapArr[(int)p.X, (int)p.Y, 0]);
+                //Console.WriteLine(prtcnt + "(" + p.X + "," + p.Y + ")=" + OriBitmapArr[(int)p.X, (int)p.Y, 0]);
                 prtcnt++;
                 if (OriBitmapArr[(int)p.X, (int)p.Y, 0] > 40)
                 {
@@ -2136,9 +2131,19 @@ namespace CrossDetectTest1
 
             //-------------------------------------------------------------------------------------
             int GridNum = 10;
-            MapGrid2 = new PointF[100, 100];
-            //1.6.5 by 線組合計算x座標平均做為爛銲道 x 座標y 座標
-            MapGrid2 = new PointF[GridNum, GridNum];
+            int ColumnCnt;
+            if ((ImgFileName.IndexOf("_3") > 0) || (ImgFileName.IndexOf("_4") > 0))
+            {
+                ColumnCnt = 1;
+                MapGrid2 = new PointF[ColumnCnt, GridNum]; //圖三圖四只有一排
+            }
+            else
+            {
+
+                //1.6.5 by 線組合計算x座標平均做為爛銲道 x 座標y 座標
+                MapGrid2 = new PointF[GridNum, GridNum];
+                ColumnCnt = ColumnCollect.Count();
+            }
             int YAvg = 0;
             ////求每條線的 Y 平均
             for (int k = 0; k < LineCollect.Count(); k++)
@@ -2152,7 +2157,7 @@ namespace CrossDetectTest1
 
                     YAvg = YAvg / LineCollect[k].Count();
 
-                    for (int i = 0; i < GridNum; i++)
+                    for (int i = 0; i < ColumnCnt; i++)
                     {
                         if (YAvg != 0)
                             MapGrid2[i, k].Y = YAvg;
@@ -2162,7 +2167,9 @@ namespace CrossDetectTest1
 
             int XAvg = 0;
             //求每條線的 Y 平均
-            for (int k = 0; k < ColumnCollect.Count(); k++)
+
+
+            for (int k = 0; k < ColumnCnt; k++)
             {
                 XAvg = 0;
                 if (ColumnCollect[k].Count() > 0)
@@ -2186,7 +2193,7 @@ namespace CrossDetectTest1
             PointF ShortP = new PointF();
 
             for (int j = 0; j < 10; j++)
-                for (int i = 0; i < 10; i++)
+                for (int i = 0; i < ColumnCnt; i++)
                 {
                     ShortP = new PointF();
                     ShortDist = 100000000;
@@ -2222,7 +2229,7 @@ namespace CrossDetectTest1
 
             Graphics g = Graphics.FromImage(DrawBitmap);
             for (int j = 0; j < 10; j++)
-                for (int i = 0; i < 10; i++)
+                for (int i = 0; i < ColumnCnt; i++)
                 {
                     //排除 0 的, 從黑洞中心拉一個矩形即為銲道初始位置
                     if (MapGrid2[i, j].X != 0 && MapGrid2[i, j].Y != 0)
@@ -2355,22 +2362,34 @@ namespace CrossDetectTest1
             int[, ,] ProcessData = BMPFast.GetRGBData(ProcessBitmap);
 
             //debug 點用
+            int ColumnCnt ;
+            int GridNum = 10;
+            if ((ImgFileName.IndexOf("_3") > 0) || (ImgFileName.IndexOf("_4") > 0))
+            {
+                ColumnCnt = 1;
+            }
+            else
+            {
+                ColumnCnt = 10;
+            }
 
-            WeldCenterInfo[,] WeldCenterList = new WeldCenterInfo[7, 7];
+
+            WeldCenterInfo[,] WeldCenterList = new WeldCenterInfo[ColumnCnt, GridNum];
             // _TempEdgeDraw = new List<System.Drawing.Point>();
 
 
-            for (int j = 0; j < 7; j++)
-                for (int i = 0; i < 7; i++)
+            for (int j = 0; j < GridNum; j++)
+                for (int i = 0; i < ColumnCnt; i++)
                     WeldCenterList[i, j] = new WeldCenterInfo();
             int EdgeCnt = 0;
 
 
             WeldCenterInfo MaxCandidte;
             int MaxScore = 0;
+         
             //    //---------------------------------------
-            for (int mmj = 0; mmj < 7; mmj++)
-                for (int mmi = 0; mmi < 7; mmi++)
+            for (int mmj = 0; mmj < GridNum; mmj++)
+                for (int mmi = 0; mmi < ColumnCnt; mmi++)
                 {
                     MaxCandidte = new WeldCenterInfo();
                     MaxCandidte.WeldScore = 0;
@@ -2381,7 +2400,7 @@ namespace CrossDetectTest1
                     //沒有在理想list的網格點
                     {
 
-                        Console.WriteLine(" MapGrid2[" + mmi + "," + mmj + "]" + MapGrid2[mmi, mmj].X + "," + MapGrid2[mmi, mmj].Y);
+                    //    Console.WriteLine(" MapGrid2[" + mmi + "," + mmj + "]" + MapGrid2[mmi, mmj].X + "," + MapGrid2[mmi, mmj].Y);
 
 
                         for (int j = (int)(MapGrid2[mmi, mmj].Y - 15); j < (int)(MapGrid2[mmi, mmj].Y + 15); j++)
@@ -2475,8 +2494,8 @@ namespace CrossDetectTest1
             System.Drawing.Point FinalDefectP = new System.Drawing.Point();
             FinalDefectPList = new List<System.Drawing.Point>();
 
-            for (int j = 0; j < 7; j++)
-                for (int i = 0; i < 7; i++)
+            for (int j = 0; j < GridNum; j++)
+                for (int i = 0; i < ColumnCnt; i++)
                 {
 
                     if (WeldCenterList[i, j].WeldCandidate.X != 0 && WeldCenterList[i, j].WeldCandidate.Y != 0)//邊緣點濾掉
@@ -2519,15 +2538,15 @@ namespace CrossDetectTest1
 
 
             //寫檔案
-            string SavePath = @"D:\\慧萱\\Code\\A+\\2021\\燃料電池\\20210721\\test";
-            string FileIdx = ImgFileName.Substring(ImgFileName.LastIndexOf("_")+1, ImgFileName.LastIndexOf(".") - ImgFileName.LastIndexOf("_")-1) ;
+            string SavePath = @"D:\\慧萱\\Code\\A+\\2021\\燃料電池\\20210721\\test-";
+            string FileIdx = ImgFileName.Substring(ImgFileName.LastIndexOf("_") + 1, ImgFileName.LastIndexOf(".") - ImgFileName.LastIndexOf("_") - 1);
             StreamWriter sw = new StreamWriter(SavePath + FileIdx + ".txt", false);
             sw.WriteLine("VisionAreaID,PosXID,PosYID");
             if (null != sw)
             {
                 foreach (System.Drawing.Point PP in FinalDefectPList)
                 {
-                    sw.WriteLine(SavePath + "," + PP.X + "," + PP.Y);
+                    sw.WriteLine(FileIdx + "," + (PP.X + 1) + "," + (PP.Y + 1));
 
                 }
             }
@@ -2803,17 +2822,80 @@ namespace CrossDetectTest1
 
         private void button25_Click(object sender, EventArgs e)
         {
+            //list for 6 files & build 總表 list
             string[] files;
             string SaveFilePath = @"D:\\慧萱\\Code\\A+\\2021\\燃料電池\\20210721";
+            List<String> ProcessOKFileName = new List<String>();
+            int ImageCnt = 0;
+            string line = "";
+            string[] sArray;
+            WeldVisionTotalList = new List<WeldVisionList>();
+            WeldVisionList node;
+
             while (true)
             {
-
                 files = Directory.GetFiles(SaveFilePath, "*.txt");
-                foreach (string file in files)
+                foreach (string file in files) //檔案
                 {
-                    StreamReader str = new StreamReader(file);
+                    if (!(ProcessOKFileName.Exists(OKfile => OKfile == file)))
+                    {
+                        StreamReader str = new StreamReader(file);
 
+                        while ((line = str.ReadLine()) != null)
+                        {
+                            node = new WeldVisionList();
+                            sArray = line.Split(',');
+
+                            node.VisionAreaId = sArray[0];
+                            node.VisionWeldXId = sArray[1];
+                            node.VisionWeldYId = sArray[2];
+
+                            WeldVisionTotalList.Add(node);
+                        }
+
+
+                        ProcessOKFileName.Add(file);
+                        ImageCnt++;
+                    }
+
+                    if (ImageCnt == 6) break;
                 }
+                if (ImageCnt == 6) break;
+            }
+
+            string BatterySetPath = @"D:\\慧萱\\文件\\A+\\20210813_電池視覺與銲接溝通規劃\\BatterySetting2.csv";
+            string setline = "";
+            string VisionArea, VisionWeldXID, VisionWeldYID, WeldArea, WeldObjID, MMname;
+            StreamReader swSet = new StreamReader(BatterySetPath);
+            while ((setline = swSet.ReadLine()) != null)
+            {
+                sArray = setline.Split(',');
+                VisionArea = sArray[1];
+                VisionWeldXID = sArray[2];
+                VisionWeldYID = sArray[3];
+                WeldArea = sArray[5];
+                WeldObjID = sArray[6];
+                MMname = sArray[4];
+
+                foreach (WeldVisionList pp in WeldVisionTotalList)
+                {
+                    if ((VisionArea == pp.VisionAreaId) && (pp.VisionWeldXId == VisionWeldXID) && (pp.VisionWeldYId == VisionWeldYID))
+                    {
+                        pp.MMname = MMname;
+                        pp.WeldWeldObjId = WeldObjID;
+                        break;
+                    }
+                }
+            }//END WHILE
+
+
+
+            foreach (WeldVisionList pp in WeldVisionTotalList)
+            {
+
+                Console.WriteLine(pp.VisionAreaId + "," + pp.VisionWeldXId + "," + pp.VisionWeldYId + "," + pp.MMname + "," + pp.WeldWeldObjId);
+
+
             }
 
 
@@ -2821,7 +2903,10 @@ namespace CrossDetectTest1
 
 
 
+        }
 
+        private void Form1_Load(object sender, EventArgs e)
+        {
 
         }
 
@@ -2831,7 +2916,14 @@ namespace CrossDetectTest1
 
 
 
-
+public class WeldVisionList
+{
+    public string VisionAreaId;
+    public string VisionWeldXId;
+    public string VisionWeldYId;
+    public string MMname;
+    public string WeldWeldObjId;
+}
 
 
 

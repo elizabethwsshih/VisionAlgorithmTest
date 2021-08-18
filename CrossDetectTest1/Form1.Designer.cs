@@ -426,7 +426,7 @@
             // 
             // button14
             // 
-            this.button14.Location = new System.Drawing.Point(17, 495);
+            this.button14.Location = new System.Drawing.Point(12, 607);
             this.button14.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.button14.Name = "button14";
             this.button14.Size = new System.Drawing.Size(131, 52);
@@ -480,7 +480,7 @@
             // 
             // button25
             // 
-            this.button25.Location = new System.Drawing.Point(17, 551);
+            this.button25.Location = new System.Drawing.Point(12, 495);
             this.button25.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.button25.Name = "button25";
             this.button25.Size = new System.Drawing.Size(131, 52);
@@ -519,6 +519,7 @@
             this.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.Name = "Form1";
             this.Text = "Form1";
+            this.Load += new System.EventHandler(this.Form1_Load);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.groupBox1.ResumeLayout(false);
             this.groupBox2.ResumeLayout(false);
